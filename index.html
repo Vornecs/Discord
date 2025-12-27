@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Web Client</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="setup-screen">
+        <div class="setup-container">
+            <h1>Discord Web Client</h1>
+            <p>Enter your bot token and server ID to get started</p>
+            <form id="setup-form">
+                <div class="form-group">
+                    <label for="bot-token">Bot Token:</label>
+                    <input type="password" id="bot-token" required placeholder="Your bot token">
+                </div>
+                <div class="form-group">
+                    <label for="server-id">Server/Guild ID:</label>
+                    <input type="text" id="server-id" required placeholder="Server ID">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="save-credentials">
+                        Save credentials (uses cookies)
+                    </label>
+                </div>
+                <button type="submit">Connect</button>
+                <div id="setup-error" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Discord Interface -->
+    <div id="main-screen" class="main-screen hidden">
+        <div class="discord-container">
+            <!-- Server/Guild Sidebar -->
+            <div class="server-sidebar">
+                <div class="server-icon" id="current-server">
+                    <span id="server-name-initial"></span>
+                </div>
+                <div class="logout-btn" id="logout-btn" title="Logout">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Channels Sidebar -->
+            <div class="channels-sidebar">
+                <div class="server-header">
+                    <h2 id="server-name">Server Name</h2>
+                </div>
+                <div class="channels-list" id="channels-list">
+                    <!-- Channels will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Main Chat Area -->
+            <div class="chat-area">
+                <div class="chat-header">
+                    <h3 id="channel-name"># channel-name</h3>
+                    <div class="channel-actions">
+                        <button id="edit-channel-btn" class="icon-btn" title="Edit Channel">
+                            <svg width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="messages-container" id="messages-container">
+                    <!-- Messages will be loaded here -->
+                </div>
+                <div class="message-input-container">
+                    <div class="message-input-wrapper">
+                        <input type="text" id="message-input" placeholder="Message #channel-name" />
+                        <button id="emoji-btn" class="icon-btn" title="Emoji">
+                            😊
+                        </button>
+                        <button id="send-btn" class="icon-btn" title="Send">
+                            <svg width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="emoji-picker" class="emoji-picker hidden">
+                        <!-- Emoji picker will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Message Modal -->
+    <div id="edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Edit Message</h3>
+            <textarea id="edit-message-input"></textarea>
+            <div class="modal-actions">
+                <button id="save-edit-btn">Save</button>
+                <button id="cancel-edit-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Channel Modal -->
+    <div id="edit-channel-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Edit Channel</h3>
+            <div class="form-group">
+                <label for="channel-name-input">Channel Name:</label>
+                <input type="text" id="channel-name-input">
+            </div>
+            <div class="form-group">
+                <label for="channel-topic-input">Channel Topic:</label>
+                <textarea id="channel-topic-input"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="save-channel-btn">Save</button>
+                <button id="cancel-channel-btn">Cancel</button>
+            </div>
+            <div id="channel-edit-error" class="error-message"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
