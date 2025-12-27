@@ -51,12 +51,35 @@ class DiscordClient {
     }
 
     /**
+     * Helper function to parse error response data safely
+     * @param {Response} response - The fetch response object
+     * @returns {Promise<Object>} - Parsed error data or empty object
+     */
+    async parseErrorData(response) {
+        try {
+            return await response.json();
+        } catch {
+            return {};
+        }
+    }
+
+    /**
+     * Helper function to check if error is a network/CORS error
+     * @param {Error} error - The error object
+     * @returns {boolean} - True if it's a network error
+     */
+    isNetworkError(error) {
+        return (error instanceof TypeError && error.message.includes('fetch')) || 
+               error.message.includes('Failed to fetch');
+    }
+
+    /**
      * Helper function to handle fetch errors consistently
      * @param {Error} error - The error object from fetch
      * @throws {Error} - Throws a user-friendly error message
      */
     handleFetchError(error) {
-        if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+        if (this.isNetworkError(error)) {
             throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
         }
         throw error;
@@ -334,7 +357,7 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                const errorData = await this.parseErrorData(response);
                 if (response.status === 401) {
                     throw new Error('Invalid bot token. Please check your token and try again.');
                 }
@@ -432,7 +455,7 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                const errorData = await this.parseErrorData(response);
                 if (response.status === 404) {
                     throw new Error('Server not found. Please check your Guild ID or make sure the bot is a member of the server.');
                 }
@@ -459,7 +482,7 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                const errorData = await this.parseErrorData(response);
                 throw new Error(errorData.message || `Failed to fetch channels (Status: ${response.status})`);
             }
 
@@ -534,7 +557,7 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                const errorData = await this.parseErrorData(response);
                 throw new Error(errorData.message || `Failed to fetch messages (Status: ${response.status})`);
             }
 
@@ -819,7 +842,7 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                const errorData = await this.parseErrorData(response);
                 throw new Error(errorData.message || `Failed to edit channel (Status: ${response.status})`);
             }
 
@@ -837,7 +860,7 @@ class DiscordClient {
             }
         } catch (error) {
             // Handle CORS and network errors with user-friendly messages
-            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+            if (this.isNetworkError(error)) {
                 this.showError('channel-edit-error', 'Network error: Unable to connect to Discord API. Check your connection and CORS configuration.');
             } else {
                 this.showError('channel-edit-error', error.message);
