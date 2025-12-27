@@ -46,6 +46,18 @@ class DiscordClient {
         this.setupEventListeners();
     }
 
+    /**
+     * Helper function to handle fetch errors consistently
+     * @param {Error} error - The error object from fetch
+     * @throws {Error} - Throws a user-friendly error message
+     */
+    handleFetchError(error) {
+        if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+            throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
+        }
+        throw error;
+    }
+
     loadSettings() {
         const savedSettings = localStorage.getItem('discord_client_settings');
         if (savedSettings) {
@@ -244,7 +256,7 @@ class DiscordClient {
         }
 
         // Basic validation for bot token format
-        if (token.length < 50) {
+        if (token.length < 59) {
             this.showError('setup-error', 'Invalid token format. Bot tokens are typically 59+ characters long.');
             return;
         }
@@ -312,8 +324,7 @@ class DiscordClient {
             const response = await fetch('https://discord.com/api/v10/users/@me', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bot ${this.botToken}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bot ${this.botToken}`
                 },
                 mode: 'cors'
             });
@@ -328,10 +339,7 @@ class DiscordClient {
 
             return await response.json();
         } catch (error) {
-            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-                throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
-            }
-            throw error;
+            this.handleFetchError(error);
         }
     }
 
@@ -414,8 +422,7 @@ class DiscordClient {
             const response = await fetch(`https://discord.com/api/v10/guilds/${this.serverId}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bot ${this.botToken}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bot ${this.botToken}`
                 },
                 mode: 'cors'
             });
@@ -433,10 +440,7 @@ class DiscordClient {
 
             return await response.json();
         } catch (error) {
-            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-                throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
-            }
-            throw error;
+            this.handleFetchError(error);
         }
     }
 
@@ -445,8 +449,7 @@ class DiscordClient {
             const response = await fetch(`https://discord.com/api/v10/guilds/${this.serverId}/channels`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bot ${this.botToken}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bot ${this.botToken}`
                 },
                 mode: 'cors'
             });
@@ -462,10 +465,7 @@ class DiscordClient {
                 .filter(ch => ch.type === 0) // Text channels only
                 .sort((a, b) => a.position - b.position);
         } catch (error) {
-            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-                throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
-            }
-            throw error;
+            this.handleFetchError(error);
         }
     }
 
@@ -524,8 +524,7 @@ class DiscordClient {
             const response = await fetch(`https://discord.com/api/v10/channels/${this.currentChannelId}/messages?limit=50`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bot ${this.botToken}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bot ${this.botToken}`
                 },
                 mode: 'cors'
             });
@@ -712,8 +711,7 @@ class DiscordClient {
             const response = await fetch(`https://discord.com/api/v10/channels/${this.currentChannelId}/messages/${messageId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bot ${this.botToken}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bot ${this.botToken}`
                 },
                 mode: 'cors'
             });
