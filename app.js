@@ -530,8 +530,8 @@ class DiscordClient {
         let avatarHtml;
         if (message.author.avatar) {
             const avatarUrl = `https://cdn.discordapp.com/avatars/${message.author.id}/${message.author.avatar}.png?size=64`;
-            avatarHtml = `<img src="${avatarUrl}" alt="${authorUsername}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                          <span style="display:none;" class="avatar-fallback">${this.escapeHtml(message.author.username.charAt(0).toUpperCase())}</span>`;
+            avatarHtml = `<img src="${avatarUrl}" alt="${authorUsername}" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                          <span class="avatar-fallback hidden">${this.escapeHtml(message.author.username.charAt(0).toUpperCase())}</span>`;
         } else {
             avatarHtml = this.escapeHtml(message.author.username.charAt(0).toUpperCase());
         }
