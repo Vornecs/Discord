@@ -690,13 +690,17 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to send message');
+                const errorData = await this.parseErrorData(response);
+                throw new Error(errorData.message || `Failed to send message (Status: ${response.status})`);
             }
 
             input.value = '';
             await this.loadMessages();
         } catch (error) {
-            alert('Failed to send message: ' + error.message);
+            const message = this.isNetworkError(error) 
+                ? 'Network error: Unable to send message. Check your connection.'
+                : `Failed to send message: ${error.message}`;
+            alert(message);
         }
     }
 
@@ -726,13 +730,17 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to edit message');
+                const errorData = await this.parseErrorData(response);
+                throw new Error(errorData.message || `Failed to edit message (Status: ${response.status})`);
             }
 
             this.hideEditModal();
             await this.loadMessages();
         } catch (error) {
-            alert('Failed to edit message: ' + error.message);
+            const message = this.isNetworkError(error)
+                ? 'Network error: Unable to edit message. Check your connection.'
+                : `Failed to edit message: ${error.message}`;
+            alert(message);
         }
     }
 
@@ -754,12 +762,16 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to delete message');
+                const errorData = await this.parseErrorData(response);
+                throw new Error(errorData.message || `Failed to delete message (Status: ${response.status})`);
             }
 
             await this.loadMessages();
         } catch (error) {
-            alert('Failed to delete message: ' + error.message);
+            const message = this.isNetworkError(error)
+                ? 'Network error: Unable to delete message. Check your connection.'
+                : `Failed to delete message: ${error.message}`;
+            alert(message);
         }
     }
 
