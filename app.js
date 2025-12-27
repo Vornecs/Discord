@@ -534,7 +534,8 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch messages');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Failed to fetch messages (Status: ${response.status})`);
             }
 
             const messages = await response.json();
@@ -552,7 +553,16 @@ class DiscordClient {
                 }
             }
         } catch (error) {
+            // Log to console for debugging, but don't alert on every poll
             console.error('Error loading messages:', error);
+            
+            // Only show error in UI if this is the initial load (not silent polling)
+            if (!silent) {
+                const messagesContainer = document.getElementById('messages-container');
+                if (messagesContainer) {
+                    messagesContainer.innerHTML = '<div class="loading">Failed to load messages. Check console for details.</div>';
+                }
+            }
         }
     }
 
@@ -809,8 +819,8 @@ class DiscordClient {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to edit channel');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Failed to edit channel (Status: ${response.status})`);
             }
 
             this.hideEditChannelModal();
@@ -826,7 +836,12 @@ class DiscordClient {
                 document.getElementById('message-input').placeholder = `Message #${channel.name}`;
             }
         } catch (error) {
-            this.showError('channel-edit-error', error.message);
+            // Handle CORS and network errors with user-friendly messages
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                this.showError('channel-edit-error', 'Network error: Unable to connect to Discord API. Check your connection and CORS configuration.');
+            } else {
+                this.showError('channel-edit-error', error.message);
+            }
         }
     }
 
