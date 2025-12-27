@@ -340,8 +340,6 @@ class DiscordClient {
             return await response.json();
         } catch (error) {
             this.handleFetchError(error);
-            // handleFetchError always throws, this line is unreachable but helps type checking
-            throw error;
         }
     }
 
@@ -443,8 +441,6 @@ class DiscordClient {
             return await response.json();
         } catch (error) {
             this.handleFetchError(error);
-            // handleFetchError always throws, this line is unreachable but helps type checking
-            throw error;
         }
     }
 
@@ -470,8 +466,6 @@ class DiscordClient {
                 .sort((a, b) => a.position - b.position);
         } catch (error) {
             this.handleFetchError(error);
-            // handleFetchError always throws, this line is unreachable but helps type checking
-            throw error;
         }
     }
 
