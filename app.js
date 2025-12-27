@@ -9,11 +9,28 @@ class DiscordClient {
         this.currentGuild = null;
         this.editingMessageId = null;
         this.messagePollingInterval = null;
+        this.botUser = null;
+        
+        // User settings
+        this.settings = {
+            displayName: '',
+            avatarUrl: '',
+            bannerUrl: '',
+            aboutMe: '',
+            accentColor: '#5865f2',
+            theme: 'dark',
+            compactMode: false,
+            fontSize: 16
+        };
         
         this.init();
     }
 
     init() {
+        // Load user settings
+        this.loadSettings();
+        this.applySettings();
+        
         // Check for saved credentials
         const savedToken = this.getCookie('discord_bot_token');
         const savedServerId = this.getCookie('discord_server_id');
@@ -29,6 +46,60 @@ class DiscordClient {
         this.setupEventListeners();
     }
 
+    loadSettings() {
+        const savedSettings = localStorage.getItem('discord_client_settings');
+        if (savedSettings) {
+            try {
+                const parsed = JSON.parse(savedSettings);
+                this.settings = { ...this.settings, ...parsed };
+            } catch (e) {
+                console.error('Failed to load settings:', e);
+            }
+        }
+    }
+
+    saveSettings() {
+        localStorage.setItem('discord_client_settings', JSON.stringify(this.settings));
+    }
+
+    applySettings() {
+        // Apply theme
+        document.body.className = '';
+        if (this.settings.theme !== 'dark') {
+            document.body.classList.add(`theme-${this.settings.theme}`);
+        }
+        
+        // Apply accent color
+        document.documentElement.style.setProperty('--accent-color', this.settings.accentColor);
+        document.documentElement.style.setProperty('--accent-color-hover', this.adjustColor(this.settings.accentColor, -20));
+        document.documentElement.style.setProperty('--accent-color-light', this.hexToRgba(this.settings.accentColor, 0.2));
+        
+        // Apply font size
+        document.documentElement.style.setProperty('--message-font-size', `${this.settings.fontSize}px`);
+        
+        // Apply compact mode
+        const messagesContainer = document.getElementById('messages-container');
+        if (messagesContainer) {
+            messagesContainer.classList.toggle('compact', this.settings.compactMode);
+        }
+    }
+
+    adjustColor(hex, percent) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt;
+        const G = (num >> 8 & 0x00FF) + amt;
+        const B = (num & 0x0000FF) + amt;
+        return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
     setupEventListeners() {
         // Setup form
         document.getElementById('setup-form').addEventListener('submit', (e) => {
@@ -39,6 +110,11 @@ class DiscordClient {
         // Logout button
         document.getElementById('logout-btn').addEventListener('click', () => {
             this.logout();
+        });
+
+        // Settings button
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            this.showSettingsModal();
         });
 
         // Send message
@@ -92,6 +168,59 @@ class DiscordClient {
                 this.hideEditChannelModal();
             }
         });
+
+        // Settings modal
+        document.getElementById('settings-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'settings-modal') {
+                this.hideSettingsModal();
+            }
+        });
+
+        document.getElementById('close-settings-btn').addEventListener('click', () => {
+            this.hideSettingsModal();
+        });
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            this.saveSettingsFromModal();
+        });
+
+        document.getElementById('reset-settings-btn').addEventListener('click', () => {
+            this.resetSettings();
+        });
+
+        // Settings tabs
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.switchSettingsTab(tab.dataset.tab);
+            });
+        });
+
+        // Accent color picker
+        document.getElementById('accent-color-input').addEventListener('input', (e) => {
+            document.getElementById('accent-color-value').textContent = e.target.value;
+        });
+
+        // Font size slider
+        document.getElementById('font-size-slider').addEventListener('input', (e) => {
+            document.getElementById('font-size-value').textContent = `${e.target.value}px`;
+        });
+
+        // Avatar URL preview
+        document.getElementById('avatar-url-input').addEventListener('input', (e) => {
+            this.updateAvatarPreview(e.target.value);
+        });
+
+        // Banner URL preview
+        document.getElementById('banner-url-input').addEventListener('input', (e) => {
+            this.updateBannerPreview(e.target.value);
+        });
+
+        // Display name preview
+        document.getElementById('display-name-input').addEventListener('input', (e) => {
+            const displayName = e.target.value || this.botUser?.username || 'Username';
+            document.getElementById('profile-display-name').textContent = displayName;
+            document.getElementById('profile-avatar-initial').textContent = displayName.charAt(0).toUpperCase();
+        });
     }
 
     showSetupScreen() {
@@ -132,10 +261,20 @@ class DiscordClient {
 
     async connectToDiscord() {
         try {
+            // Fetch bot user information first
+            this.botUser = await this.fetchBotUser();
+            
             // Fetch guild information
             this.currentGuild = await this.fetchGuild();
             document.getElementById('server-name').textContent = this.currentGuild.name;
-            document.getElementById('server-name-initial').textContent = this.currentGuild.name.charAt(0).toUpperCase();
+            
+            // Update server icon
+            const serverIcon = document.getElementById('current-server');
+            if (this.currentGuild.icon) {
+                serverIcon.innerHTML = `<img src="https://cdn.discordapp.com/icons/${this.currentGuild.id}/${this.currentGuild.icon}.png?size=128" alt="${this.currentGuild.name}">`;
+            } else {
+                document.getElementById('server-name-initial').textContent = this.currentGuild.name.charAt(0).toUpperCase();
+            }
 
             // Fetch channels
             this.channels = await this.fetchChannels();
@@ -147,9 +286,100 @@ class DiscordClient {
                 this.selectChannel(firstTextChannel.id);
             }
 
+            // Update user panel with bot info
+            this.updateUserPanel();
+
             this.showMainScreen();
         } catch (error) {
             throw new Error('Connection failed: ' + error.message);
+        }
+    }
+
+    async fetchBotUser() {
+        const response = await fetch('https://discord.com/api/v10/users/@me', {
+            headers: {
+                'Authorization': `Bot ${this.botToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch bot user');
+        }
+
+        return await response.json();
+    }
+
+    updateUserPanel() {
+        // Use custom display name if set, otherwise use bot username
+        const displayName = this.settings.displayName || this.botUser?.username || 'Bot User';
+        
+        // Update settings modal with bot info
+        if (!this.settings.displayName && this.botUser) {
+            document.getElementById('display-name-input').placeholder = this.botUser.username;
+        }
+        
+        document.getElementById('profile-display-name').textContent = displayName;
+        document.getElementById('profile-username-display').textContent = `@${this.botUser?.username || 'user'}`;
+        document.getElementById('profile-avatar-initial').textContent = displayName.charAt(0).toUpperCase();
+        
+        // Update avatar in profile preview
+        this.updateAvatarPreview(this.settings.avatarUrl);
+        this.updateBannerPreview(this.settings.bannerUrl);
+        
+        // Update user panel in sidebar
+        document.getElementById('user-panel-name').textContent = displayName;
+        document.getElementById('user-panel-initial').textContent = displayName.charAt(0).toUpperCase();
+        
+        // Update user panel avatar
+        const userPanelImg = document.getElementById('user-panel-avatar-img');
+        const userPanelInitial = document.getElementById('user-panel-initial');
+        
+        const avatarUrl = this.settings.avatarUrl || 
+            (this.botUser?.avatar ? `https://cdn.discordapp.com/avatars/${this.botUser.id}/${this.botUser.avatar}.png?size=64` : null);
+        
+        if (avatarUrl) {
+            userPanelImg.src = avatarUrl;
+            userPanelImg.classList.remove('hidden');
+            userPanelInitial.classList.add('hidden');
+            userPanelImg.onerror = () => {
+                userPanelImg.classList.add('hidden');
+                userPanelInitial.classList.remove('hidden');
+            };
+        } else {
+            userPanelImg.classList.add('hidden');
+            userPanelInitial.classList.remove('hidden');
+        }
+    }
+
+    updateAvatarPreview(url) {
+        const avatarImg = document.getElementById('profile-avatar-img');
+        const avatarInitial = document.getElementById('profile-avatar-initial');
+        
+        if (url && url.trim()) {
+            avatarImg.src = url;
+            avatarImg.classList.remove('hidden');
+            avatarInitial.classList.add('hidden');
+            
+            avatarImg.onerror = () => {
+                avatarImg.classList.add('hidden');
+                avatarInitial.classList.remove('hidden');
+            };
+        } else if (this.botUser?.avatar) {
+            avatarImg.src = `https://cdn.discordapp.com/avatars/${this.botUser.id}/${this.botUser.avatar}.png?size=128`;
+            avatarImg.classList.remove('hidden');
+            avatarInitial.classList.add('hidden');
+        } else {
+            avatarImg.classList.add('hidden');
+            avatarInitial.classList.remove('hidden');
+        }
+    }
+
+    updateBannerPreview(url) {
+        const banner = document.getElementById('profile-banner-preview');
+        if (url && url.trim()) {
+            banner.style.backgroundImage = `url(${url})`;
+        } else {
+            banner.style.backgroundImage = '';
         }
     }
 
@@ -293,13 +523,21 @@ class DiscordClient {
         messageDiv.className = 'message';
         messageDiv.dataset.messageId = message.id;
 
-        // Escape HTML to prevent XSS
-        const authorInitial = this.escapeHtml(message.author.username.charAt(0).toUpperCase());
         const authorUsername = this.escapeHtml(message.author.username);
         const timestamp = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+        // Get avatar URL
+        let avatarHtml;
+        if (message.author.avatar) {
+            const avatarUrl = `https://cdn.discordapp.com/avatars/${message.author.id}/${message.author.avatar}.png?size=64`;
+            avatarHtml = `<img src="${avatarUrl}" alt="${authorUsername}" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                          <span class="avatar-fallback hidden">${this.escapeHtml(message.author.username.charAt(0).toUpperCase())}</span>`;
+        } else {
+            avatarHtml = this.escapeHtml(message.author.username.charAt(0).toUpperCase());
+        }
+
         messageDiv.innerHTML = `
-            <div class="message-avatar">${authorInitial}</div>
+            <div class="message-avatar">${avatarHtml}</div>
             <div class="message-content">
                 <div class="message-header">
                     <span class="message-author">${authorUsername}</span>
@@ -532,6 +770,99 @@ class DiscordClient {
         document.getElementById('edit-channel-modal').classList.add('hidden');
     }
 
+    // Settings Modal Methods
+    showSettingsModal() {
+        // Populate settings form with current values
+        document.getElementById('display-name-input').value = this.settings.displayName;
+        document.getElementById('avatar-url-input').value = this.settings.avatarUrl;
+        document.getElementById('banner-url-input').value = this.settings.bannerUrl;
+        document.getElementById('about-me-input').value = this.settings.aboutMe;
+        document.getElementById('accent-color-input').value = this.settings.accentColor;
+        document.getElementById('accent-color-value').textContent = this.settings.accentColor;
+        document.getElementById('font-size-slider').value = this.settings.fontSize;
+        document.getElementById('font-size-value').textContent = `${this.settings.fontSize}px`;
+        document.getElementById('compact-mode-checkbox').checked = this.settings.compactMode;
+        
+        // Set theme radio
+        const themeRadio = document.querySelector(`input[name="theme"][value="${this.settings.theme}"]`);
+        if (themeRadio) themeRadio.checked = true;
+        
+        // Update preview
+        this.updateUserPanel();
+        
+        // Show modal
+        document.getElementById('settings-modal').classList.remove('hidden');
+        
+        // Reset to profile tab
+        this.switchSettingsTab('profile');
+    }
+
+    hideSettingsModal() {
+        document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    switchSettingsTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+        
+        // Update tab content
+        document.querySelectorAll('.settings-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+    }
+
+    saveSettingsFromModal() {
+        // Gather all settings from the form
+        this.settings.displayName = document.getElementById('display-name-input').value.trim();
+        this.settings.avatarUrl = document.getElementById('avatar-url-input').value.trim();
+        this.settings.bannerUrl = document.getElementById('banner-url-input').value.trim();
+        this.settings.aboutMe = document.getElementById('about-me-input').value.trim();
+        this.settings.accentColor = document.getElementById('accent-color-input').value;
+        this.settings.fontSize = parseInt(document.getElementById('font-size-slider').value, 10);
+        this.settings.compactMode = document.getElementById('compact-mode-checkbox').checked;
+        
+        const selectedTheme = document.querySelector('input[name="theme"]:checked');
+        this.settings.theme = selectedTheme ? selectedTheme.value : 'dark';
+        
+        // Save to localStorage
+        this.saveSettings();
+        
+        // Apply settings immediately
+        this.applySettings();
+        
+        // Re-render messages if loaded
+        if (this.messages.length > 0) {
+            this.renderMessages();
+        }
+        
+        // Close modal
+        this.hideSettingsModal();
+    }
+
+    resetSettings() {
+        if (!confirm('Are you sure you want to reset all settings to defaults?')) return;
+        
+        this.settings = {
+            displayName: '',
+            avatarUrl: '',
+            bannerUrl: '',
+            aboutMe: '',
+            accentColor: '#5865f2',
+            theme: 'dark',
+            compactMode: false,
+            fontSize: 16
+        };
+        
+        this.saveSettings();
+        this.applySettings();
+        
+        // Re-populate the form
+        this.showSettingsModal();
+    }
+
     logout() {
         // Clear cookies
         this.deleteCookie('discord_bot_token');
@@ -549,6 +880,7 @@ class DiscordClient {
         this.channels = [];
         this.messages = [];
         this.currentGuild = null;
+        this.botUser = null;
 
         // Show setup screen
         this.showSetupScreen();
