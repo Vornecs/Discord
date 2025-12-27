@@ -11,6 +11,10 @@ class DiscordClient {
         this.messagePollingInterval = null;
         this.botUser = null;
         
+        // Validation constants
+        this.MIN_TOKEN_LENGTH = 59; // Discord bot tokens are typically 59+ characters
+        this.SNOWFLAKE_REGEX = /^\d{17,19}$/; // Discord snowflake IDs are 17-19 digits
+        
         // User settings
         this.settings = {
             displayName: '',
@@ -256,13 +260,13 @@ class DiscordClient {
         }
 
         // Basic validation for bot token format
-        if (token.length < 59) {
-            this.showError('setup-error', 'Invalid token format. Bot tokens are typically 59+ characters long.');
+        if (token.length < this.MIN_TOKEN_LENGTH) {
+            this.showError('setup-error', `Invalid token format. Bot tokens are typically ${this.MIN_TOKEN_LENGTH}+ characters long.`);
             return;
         }
 
         // Basic validation for server/guild ID (should be a numeric snowflake)
-        if (!/^\d{17,19}$/.test(serverId)) {
+        if (!this.SNOWFLAKE_REGEX.test(serverId)) {
             this.showError('setup-error', 'Invalid Guild ID format. Guild IDs should be 17-19 digit numbers.');
             return;
         }
