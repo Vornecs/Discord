@@ -293,14 +293,16 @@ class DiscordClient {
         messageDiv.className = 'message';
         messageDiv.dataset.messageId = message.id;
 
-        const authorInitial = message.author.username.charAt(0).toUpperCase();
+        // Escape HTML to prevent XSS
+        const authorInitial = this.escapeHtml(message.author.username.charAt(0).toUpperCase());
+        const authorUsername = this.escapeHtml(message.author.username);
         const timestamp = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         messageDiv.innerHTML = `
             <div class="message-avatar">${authorInitial}</div>
             <div class="message-content">
                 <div class="message-header">
-                    <span class="message-author">${message.author.username}</span>
+                    <span class="message-author">${authorUsername}</span>
                     <span class="message-timestamp">${timestamp}</span>
                 </div>
                 <div class="message-text">${this.formatMessageContent(message.content)}</div>
@@ -320,6 +322,12 @@ class DiscordClient {
         `;
 
         return messageDiv;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     formatMessageContent(content) {
@@ -509,8 +517,12 @@ class DiscordClient {
             this.channels = await this.fetchChannels();
             this.renderChannels();
             
-            // Re-select current channel to update UI
-            this.selectChannel(this.currentChannelId);
+            // Update the channel name display without re-selecting (to avoid restarting polling)
+            const channel = this.channels.find(ch => ch.id === this.currentChannelId);
+            if (channel) {
+                document.getElementById('channel-name').textContent = `# ${channel.name}`;
+                document.getElementById('message-input').placeholder = `Message #${channel.name}`;
+            }
         } catch (error) {
             this.showError('channel-edit-error', error.message);
         }
