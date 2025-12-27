@@ -297,7 +297,7 @@ class DiscordClient {
 
         // Basic validation for bot token format
         if (token.length < this.MIN_TOKEN_LENGTH) {
-            this.showError('setup-error', `Invalid token format. Bot tokens are typically ${this.MIN_TOKEN_LENGTH}+ characters long.`);
+            this.showError('setup-error', 'Invalid token format. Please check your bot token and try again.');
             return;
         }
 
