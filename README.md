@@ -96,7 +96,16 @@ See LICENSE file for details.
 
 ## Troubleshooting
 
-**Connection Failed**: Verify your bot token and server ID are correct
+**Connection Failed - CORS Error**: 
+The Discord API does not support direct browser requests due to CORS (Cross-Origin Resource Sharing) restrictions. To use this client, you have a few options:
+1. Use a CORS proxy service (e.g., cors-anywhere)
+2. Run the app through a local web server with a proxy
+3. Use a browser extension that disables CORS (for development only)
+4. Deploy to a server with a backend proxy
+
+**Invalid Bot Token**: Verify your bot token is correct and hasn't been regenerated. Bot tokens are typically 59+ characters long.
+
+**Invalid Guild ID**: Make sure you're using the correct server/guild ID (a 17-19 digit number). Enable Developer Mode in Discord to copy the ID.
 
 **Cannot Send Messages**: Ensure your bot has "Send Messages" permission in the channel
 

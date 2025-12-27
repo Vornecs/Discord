@@ -243,6 +243,18 @@ class DiscordClient {
             return;
         }
 
+        // Basic validation for bot token format
+        if (token.length < 50) {
+            this.showError('setup-error', 'Invalid token format. Bot tokens are typically 59+ characters long.');
+            return;
+        }
+
+        // Basic validation for server/guild ID (should be a numeric snowflake)
+        if (!/^\d{17,19}$/.test(serverId)) {
+            this.showError('setup-error', 'Invalid Guild ID format. Guild IDs should be 17-19 digit numbers.');
+            return;
+        }
+
         this.botToken = token;
         this.serverId = serverId;
 
@@ -296,17 +308,31 @@ class DiscordClient {
     }
 
     async fetchBotUser() {
-        const response = await fetch('https://discord.com/api/v10/users/@me', {
-            headers: {
-                'Authorization': `Bot ${this.botToken}`
+        try {
+            const response = await fetch('https://discord.com/api/v10/users/@me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bot ${this.botToken}`,
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                if (response.status === 401) {
+                    throw new Error('Invalid bot token. Please check your token and try again.');
+                }
+                throw new Error(errorData.message || `Failed to fetch bot user (Status: ${response.status})`);
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch bot user');
+            return await response.json();
+        } catch (error) {
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
+            }
+            throw error;
         }
-
-        return await response.json();
     }
 
     updateUserPanel() {
@@ -384,35 +410,63 @@ class DiscordClient {
     }
 
     async fetchGuild() {
-        const response = await fetch(`https://discord.com/api/v10/guilds/${this.serverId}`, {
-            headers: {
-                'Authorization': `Bot ${this.botToken}`
+        try {
+            const response = await fetch(`https://discord.com/api/v10/guilds/${this.serverId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bot ${this.botToken}`,
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                if (response.status === 404) {
+                    throw new Error('Server not found. Please check your Guild ID or make sure the bot is a member of the server.');
+                }
+                if (response.status === 403) {
+                    throw new Error('Access denied. Make sure the bot has proper permissions in the server.');
+                }
+                throw new Error(errorData.message || `Failed to fetch guild (Status: ${response.status})`);
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch guild');
+            return await response.json();
+        } catch (error) {
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
+            }
+            throw error;
         }
-
-        return await response.json();
     }
 
     async fetchChannels() {
-        const response = await fetch(`https://discord.com/api/v10/guilds/${this.serverId}/channels`, {
-            headers: {
-                'Authorization': `Bot ${this.botToken}`
+        try {
+            const response = await fetch(`https://discord.com/api/v10/guilds/${this.serverId}/channels`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bot ${this.botToken}`,
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Failed to fetch channels (Status: ${response.status})`);
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch channels');
+            const channels = await response.json();
+            // Filter and sort text channels
+            return channels
+                .filter(ch => ch.type === 0) // Text channels only
+                .sort((a, b) => a.position - b.position);
+        } catch (error) {
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                throw new Error('Network error: Unable to connect to Discord API. This may be due to CORS restrictions. Try using a CORS proxy or running the app from a proper web server.');
+            }
+            throw error;
         }
-
-        const channels = await response.json();
-        // Filter and sort text channels
-        return channels
-            .filter(ch => ch.type === 0) // Text channels only
-            .sort((a, b) => a.position - b.position);
     }
 
     renderChannels() {
@@ -468,9 +522,12 @@ class DiscordClient {
 
         try {
             const response = await fetch(`https://discord.com/api/v10/channels/${this.currentChannelId}/messages?limit=50`, {
+                method: 'GET',
                 headers: {
-                    'Authorization': `Bot ${this.botToken}`
-                }
+                    'Authorization': `Bot ${this.botToken}`,
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors'
             });
 
             if (!response.ok) {
@@ -592,7 +649,8 @@ class DiscordClient {
                     'Authorization': `Bot ${this.botToken}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ content })
+                body: JSON.stringify({ content }),
+                mode: 'cors'
             });
 
             if (!response.ok) {
@@ -627,7 +685,8 @@ class DiscordClient {
                     'Authorization': `Bot ${this.botToken}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ content: newContent })
+                body: JSON.stringify({ content: newContent }),
+                mode: 'cors'
             });
 
             if (!response.ok) {
@@ -653,8 +712,10 @@ class DiscordClient {
             const response = await fetch(`https://discord.com/api/v10/channels/${this.currentChannelId}/messages/${messageId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bot ${this.botToken}`
-                }
+                    'Authorization': `Bot ${this.botToken}`,
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors'
             });
 
             if (!response.ok) {
@@ -741,7 +802,8 @@ class DiscordClient {
                 body: JSON.stringify({ 
                     name: newName.toLowerCase().replace(/\s+/g, '-'),
                     topic: newTopic || null
-                })
+                }),
+                mode: 'cors'
             });
 
             if (!response.ok) {
