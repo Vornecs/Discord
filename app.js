@@ -69,8 +69,21 @@ class DiscordClient {
      * @returns {boolean} - True if it's a network error
      */
     isNetworkError(error) {
-        return (error instanceof TypeError && error.message.includes('fetch')) || 
-               error.message.includes('Failed to fetch');
+        // Check for fetch-related TypeError
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+            return true;
+        }
+        // Check for common network error messages
+        if (error.message.includes('Failed to fetch') || 
+            error.message.includes('NetworkError') ||
+            error.message.includes('Network request failed')) {
+            return true;
+        }
+        // Check for specific error names
+        if (error.name === 'NetworkError' || error.name === 'FetchError') {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -290,7 +303,7 @@ class DiscordClient {
 
         // Basic validation for server/guild ID (should be a numeric snowflake)
         if (!this.SNOWFLAKE_REGEX.test(serverId)) {
-            this.showError('setup-error', 'Invalid Guild ID format. Guild IDs should be 17-19 digit numbers.');
+            this.showError('setup-error', 'Invalid Guild ID format. Guild IDs should be numeric Discord snowflake IDs (e.g., 17-19 digits).');
             return;
         }
 
