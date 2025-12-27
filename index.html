@@ -5,29 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord Web Client</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Setup Screen -->
     <div id="setup-screen" class="setup-screen">
         <div class="setup-container">
+            <div class="setup-logo">
+                <svg width="48" height="48" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z"/>
+                </svg>
+            </div>
             <h1>Discord Web Client</h1>
             <p>Enter your bot token and server ID to get started</p>
             <form id="setup-form">
                 <div class="form-group">
-                    <label for="bot-token">Bot Token:</label>
+                    <label for="bot-token">Bot Token</label>
                     <input type="password" id="bot-token" required placeholder="Your bot token">
                 </div>
                 <div class="form-group">
-                    <label for="server-id">Server/Guild ID:</label>
+                    <label for="server-id">Server/Guild ID</label>
                     <input type="text" id="server-id" required placeholder="Server ID">
                 </div>
-                <div class="form-group">
-                    <label>
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
                         <input type="checkbox" id="save-credentials">
+                        <span class="checkbox-custom"></span>
                         Save credentials (uses cookies)
                     </label>
                 </div>
-                <button type="submit">Connect</button>
+                <button type="submit" class="btn-primary">
+                    <span>Connect</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/>
+                    </svg>
+                </button>
                 <div id="setup-error" class="error-message"></div>
             </form>
         </div>
@@ -38,8 +50,14 @@
         <div class="discord-container">
             <!-- Server/Guild Sidebar -->
             <div class="server-sidebar">
-                <div class="server-icon" id="current-server">
+                <div class="server-icon" id="current-server" title="Current Server">
                     <span id="server-name-initial"></span>
+                </div>
+                <div class="sidebar-divider"></div>
+                <div class="settings-btn" id="settings-btn" title="User Settings">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                    </svg>
                 </div>
                 <div class="logout-btn" id="logout-btn" title="Logout">
                     <svg width="24" height="24" viewBox="0 0 24 24">
@@ -55,6 +73,16 @@
                 </div>
                 <div class="channels-list" id="channels-list">
                     <!-- Channels will be loaded here -->
+                </div>
+                <div class="user-panel" id="user-panel">
+                    <div class="user-panel-avatar" id="user-panel-avatar">
+                        <span id="user-panel-initial">B</span>
+                        <img id="user-panel-avatar-img" class="hidden" alt="Avatar">
+                    </div>
+                    <div class="user-panel-info">
+                        <span class="user-panel-name" id="user-panel-name">Bot User</span>
+                        <span class="user-panel-status">Online</span>
+                    </div>
                 </div>
             </div>
 
@@ -110,18 +138,177 @@
         <div class="modal-content">
             <h3>Edit Channel</h3>
             <div class="form-group">
-                <label for="channel-name-input">Channel Name:</label>
+                <label for="channel-name-input">Channel Name</label>
                 <input type="text" id="channel-name-input">
             </div>
             <div class="form-group">
-                <label for="channel-topic-input">Channel Topic:</label>
+                <label for="channel-topic-input">Channel Topic</label>
                 <textarea id="channel-topic-input"></textarea>
             </div>
             <div class="modal-actions">
-                <button id="save-channel-btn">Save</button>
-                <button id="cancel-channel-btn">Cancel</button>
+                <button id="save-channel-btn" class="btn-primary">Save</button>
+                <button id="cancel-channel-btn" class="btn-secondary">Cancel</button>
             </div>
             <div id="channel-edit-error" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- User Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content settings-modal-content">
+            <div class="settings-header">
+                <h3>User Settings</h3>
+                <button id="close-settings-btn" class="close-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="profile">Profile</button>
+                <button class="settings-tab" data-tab="appearance">Appearance</button>
+                <button class="settings-tab" data-tab="about">About</button>
+            </div>
+            
+            <!-- Profile Tab -->
+            <div id="profile-tab" class="settings-tab-content active">
+                <div class="profile-preview">
+                    <div class="profile-banner" id="profile-banner-preview">
+                        <div class="banner-edit-overlay">
+                            <span>Click to change banner</span>
+                        </div>
+                    </div>
+                    <div class="profile-avatar-container">
+                        <div class="profile-avatar" id="profile-avatar-preview">
+                            <span id="profile-avatar-initial">U</span>
+                            <img id="profile-avatar-img" class="hidden" alt="Avatar">
+                        </div>
+                        <div class="avatar-edit-overlay">
+                            <svg width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <span class="profile-name" id="profile-display-name">Username</span>
+                        <span class="profile-username" id="profile-username-display">@username</span>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Display Name</h4>
+                    <input type="text" id="display-name-input" placeholder="Your display name">
+                    <p class="input-hint">This is how others see you in the app</p>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Avatar URL</h4>
+                    <input type="text" id="avatar-url-input" placeholder="https://example.com/avatar.png">
+                    <p class="input-hint">Use a direct link to an image (JPG, PNG, GIF)</p>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Banner URL</h4>
+                    <input type="text" id="banner-url-input" placeholder="https://example.com/banner.png">
+                    <p class="input-hint">Recommended size: 600x240 pixels</p>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>About Me</h4>
+                    <textarea id="about-me-input" placeholder="Tell us about yourself..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Appearance Tab -->
+            <div id="appearance-tab" class="settings-tab-content hidden">
+                <div class="settings-section">
+                    <h4>Accent Color</h4>
+                    <div class="color-picker-container">
+                        <input type="color" id="accent-color-input" value="#5865f2">
+                        <span class="color-value" id="accent-color-value">#5865f2</span>
+                    </div>
+                    <p class="input-hint">Changes the primary color throughout the app</p>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Theme</h4>
+                    <div class="theme-options">
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="dark" checked>
+                            <span class="theme-preview dark-theme">
+                                <span class="theme-name">Dark</span>
+                            </span>
+                        </label>
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="midnight">
+                            <span class="theme-preview midnight-theme">
+                                <span class="theme-name">Midnight</span>
+                            </span>
+                        </label>
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="light">
+                            <span class="theme-preview light-theme">
+                                <span class="theme-name">Light</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Message Display</h4>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="compact-mode-checkbox">
+                            <span class="checkbox-custom"></span>
+                            Compact Mode
+                        </label>
+                    </div>
+                    <p class="input-hint">Reduce spacing between messages</p>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Font Size</h4>
+                    <div class="slider-container">
+                        <input type="range" id="font-size-slider" min="12" max="20" value="16">
+                        <span class="slider-value" id="font-size-value">16px</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- About Tab -->
+            <div id="about-tab" class="settings-tab-content hidden">
+                <div class="about-content">
+                    <div class="about-logo">
+                        <svg width="64" height="64" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z"/>
+                        </svg>
+                    </div>
+                    <h2>Discord Web Client</h2>
+                    <p class="version">Version 2.0.0</p>
+                    <p class="about-description">
+                        A modern, customizable Discord web client built for GitHub Pages. 
+                        Connect with your Discord server using a bot token and enjoy a sleek, 
+                        personalized experience.
+                    </p>
+                    <div class="about-features">
+                        <h4>Features</h4>
+                        <ul>
+                            <li>🎨 Customizable themes and accent colors</li>
+                            <li>👤 Personalized profile with avatar and banner</li>
+                            <li>💬 Full messaging support</li>
+                            <li>😊 Built-in emoji picker</li>
+                            <li>📱 Responsive design</li>
+                            <li>🔒 Secure - your token stays local</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-footer">
+                <button id="reset-settings-btn" class="btn-danger">Reset to Defaults</button>
+                <button id="save-settings-btn" class="btn-primary">Save Changes</button>
+            </div>
         </div>
     </div>
 
